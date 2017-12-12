@@ -910,6 +910,16 @@ describe("New HtmlReporter", function() {
         reporter.initialize();
 
         reporter.jasmineStarted({ totalSpecsDefined: 1 });
+        reporter.suiteStarted({
+          id: 1,
+          description: "A suite"
+        });
+
+        reporter.suiteStarted({
+          id: 2,
+          description: "inner suite"
+        });
+
 
         var passingResult = {id: 123, status: "passed", passedExpectations: [{passed: true}], failedExpectations: []};
         reporter.specStarted(passingResult);
@@ -930,6 +940,8 @@ describe("New HtmlReporter", function() {
         };
         reporter.specStarted(failingResult);
         reporter.specDone(failingResult);
+        reporter.suiteDone({});
+        reporter.suiteDone({});
         reporter.jasmineDone({});
       });
 
@@ -947,20 +959,34 @@ describe("New HtmlReporter", function() {
         expect(failure.getAttribute("class")).toMatch(/jasmine-failed/);
         expect(failure.getAttribute("class")).toMatch(/jasmine-spec-detail/);
 
-        var specDiv = failure.childNodes[0];
+        var specDiv = failure.childNodes[1];
         expect(specDiv.getAttribute("class")).toEqual("jasmine-description");
 
         var specLink = specDiv.childNodes[0];
         expect(specLink.getAttribute("title")).toEqual("a suite with a failing spec");
         expect(specLink.getAttribute("href")).toEqual("?foo=bar&spec=a suite with a failing spec");
 
-        var message = failure.childNodes[1].childNodes[0];
+        var message = failure.childNodes[2].childNodes[0];
         expect(message.getAttribute("class")).toEqual("jasmine-result-message");
         expect(message.innerHTML).toEqual("a failure message");
 
-        var stackTrace = failure.childNodes[1].childNodes[1];
+        var stackTrace = failure.childNodes[2].childNodes[1];
         expect(stackTrace.getAttribute("class")).toEqual("jasmine-stack-trace");
         expect(stackTrace.innerHTML).toEqual("a stack trace");
+        expect(true).toBe(false);
+      });
+
+      it("provides links to focus on suites surrounding a failure", function() {
+        var specFailures = container.querySelector(".jasmine-failures");
+
+        var failure = specFailures.childNodes[0];
+        var links = failure.querySelectorAll('.jasmine-failure-suite-links a');
+
+        expect(links.length).toEqual(2);
+        expect(links[0].textContent).toEqual('A suite');
+        expect(links[0].href).toMatch(/\?spec=A%20suite/);
+        expect(links[1].textContent).toEqual('inner suite');
+        expect(links[1].href).toMatch(/\?spec=A%20suite%20inner%20suite/);
       });
 
       it("allows switching between failure details and the spec summary", function() {

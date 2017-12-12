@@ -96,14 +96,15 @@ jasmineRequire.HtmlReporter = function(j$) {
       if (result.status == 'failed') {
         failureCount++;
 
+        var messages = createDom('div', {className: 'jasmine-messages'});
         var failure =
           createDom('div', {className: 'jasmine-spec-detail jasmine-failed'},
+            failureSuiteLinks(currentParent),
             createDom('div', {className: 'jasmine-description'},
               createDom('a', {title: result.fullName, href: specHref(result)}, result.fullName)
             ),
-            createDom('div', {className: 'jasmine-messages'})
+            messages
           );
-        var messages = failure.childNodes[1];
 
         for (var i = 0; i < result.failedExpectations.length; i++) {
           var expectation = result.failedExpectations[i];
@@ -378,6 +379,37 @@ jasmineRequire.HtmlReporter = function(j$) {
           }
         }
       }
+    }
+
+    function failureSuiteLinks(leafSuite) {
+      var suites = [];
+      var container = createDom('div', {className: 'jasmine-failure-suite-links'});
+      var suite, suiteNode, url;
+
+      // Walk up the stack of suites until (but not including) the root
+      for (suite = leafSuite; suite && suite.parent; suite = suite.parent) {
+        suiteNode = createDom('a', { href: suitePath(suite) }, suite.result.description);
+
+        if (container.firstChild) {
+          container.insertBefore(createTextNode(' / '), container.firstChild);
+          container.insertBefore(suiteNode, container.firstChild);
+        } else {
+          container.appendChild(suiteNode);
+        }
+      }
+
+      return container;
+    }
+
+    function suitePath(suite) {
+      var els = [];
+
+      while (suite && suite.parent) {
+        els.unshift(suite.result.description);
+        suite = suite.parent;
+      }
+
+      return './?spec=' + encodeURIComponent(els.join(' '));
     }
   }
 
