@@ -971,6 +971,7 @@ describe("New HtmlReporter", function() {
         var specLink = specDiv.childNodes[0];
         expect(specLink.getAttribute("title")).toEqual("a suite with a failing spec");
         expect(specLink.getAttribute("href")).toEqual("?foo=bar&spec=a suite with a failing spec");
+        expect(specLink.innerHTML).toEqual("a failing spec");
 
         var message = failure.childNodes[2].childNodes[0];
         expect(message.getAttribute("class")).toEqual("jasmine-result-message");
