@@ -381,24 +381,23 @@ jasmineRequire.HtmlReporter = function(j$) {
       }
     }
 
-    function failureSuiteLinks(leafSuite) {
-      var suites = [];
-      var container = createDom('div', {className: 'jasmine-failure-suite-links'});
-      var suite, suiteNode, url;
+    function failureSuiteLinks(leafSuite, childToAppend) {
+      var suiteNode = createDom('div', { class: 'jasmine-failure-suite-link' },
+        createDom('a', { href: suitePath(leafSuite) },
+          leafSuite.result.description
+        )
+      );
 
-      // Walk up the stack of suites until (but not including) the root
-      for (suite = leafSuite; suite && suite.parent; suite = suite.parent) {
-        suiteNode = createDom('a', { href: suitePath(suite) }, suite.result.description);
-
-        if (container.firstChild) {
-          container.insertBefore(createTextNode(' / '), container.firstChild);
-          container.insertBefore(suiteNode, container.firstChild);
-        } else {
-          container.appendChild(suiteNode);
-        }
+      if (childToAppend) {
+        suiteNode.appendChild(childToAppend);
       }
 
-      return container;
+      // Descend the stack of suites until (but not including) the root
+      if (leafSuite.parent && leafSuite.parent.parent) {
+        return failureSuiteLinks(leafSuite.parent, suiteNode);
+      } else {
+        return suiteNode;
+      }
     }
 
     function suitePath(suite) {

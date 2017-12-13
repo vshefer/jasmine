@@ -920,6 +920,11 @@ describe("New HtmlReporter", function() {
           description: "inner suite"
         });
 
+        reporter.suiteStarted({
+          id: 3,
+          description: "more inner suite"
+        });
+
 
         var passingResult = {id: 123, status: "passed", passedExpectations: [{passed: true}], failedExpectations: []};
         reporter.specStarted(passingResult);
@@ -940,6 +945,7 @@ describe("New HtmlReporter", function() {
         };
         reporter.specStarted(failingResult);
         reporter.specDone(failingResult);
+        reporter.suiteDone({});
         reporter.suiteDone({});
         reporter.suiteDone({});
         reporter.jasmineDone({});
@@ -973,20 +979,28 @@ describe("New HtmlReporter", function() {
         var stackTrace = failure.childNodes[2].childNodes[1];
         expect(stackTrace.getAttribute("class")).toEqual("jasmine-stack-trace");
         expect(stackTrace.innerHTML).toEqual("a stack trace");
-        expect(true).toBe(false);
       });
 
       it("provides links to focus on suites surrounding a failure", function() {
         var specFailures = container.querySelector(".jasmine-failures");
 
         var failure = specFailures.childNodes[0];
-        var links = failure.querySelectorAll('.jasmine-failure-suite-links a');
+        var parent = failure.querySelector('.jasmine-failure-suite-link');
 
-        expect(links.length).toEqual(2);
-        expect(links[0].textContent).toEqual('A suite');
-        expect(links[0].href).toMatch(/\?spec=A%20suite/);
-        expect(links[1].textContent).toEqual('inner suite');
-        expect(links[1].href).toMatch(/\?spec=A%20suite%20inner%20suite/);
+        expect(parent.firstChild.tagName).toEqual('A');
+        expect(parent.firstChild.textContent).toEqual('A suite');
+        expect(parent.firstChild.href).toMatch(/\?spec=A%20suite/);
+
+        var child = parent.querySelector('.jasmine-failure-suite-link');
+        expect(child.firstChild.tagName).toEqual('A');
+        expect(child.firstChild.textContent).toEqual('inner suite');
+        expect(child.firstChild.href).toMatch(/\?spec=A%20suite%20inner%20suite/);
+
+        var grandchild = child.querySelector('.jasmine-failure-suite-link');
+        expect(grandchild.firstChild.tagName).toEqual('A');
+        expect(grandchild.firstChild.textContent).toEqual('more inner suite');
+        expect(grandchild.firstChild.href).toMatch(
+          /\?spec=A%20suite%20inner%20suite%20more%20inner%20suite/);
       });
 
       it("allows switching between failure details and the spec summary", function() {
