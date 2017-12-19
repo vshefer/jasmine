@@ -922,6 +922,14 @@ describe("HtmlReporter", function() {
         reporter.initialize();
 
         reporter.jasmineStarted({ totalSpecsDefined: 1 });
+        reporter.suiteStarted({
+          id: 1,
+          description: "A suite"
+        });
+        reporter.suiteStarted({
+          id: 2,
+          description: "inner suite"
+        });
 
         var passingResult = {id: 123, status: "passed", passedExpectations: [{passed: true}], failedExpectations: []};
         reporter.specStarted(passingResult);
@@ -931,7 +939,7 @@ describe("HtmlReporter", function() {
           id: 124,
           status: "failed",
           description: "a failing spec",
-          fullName: "a suite with a failing spec",
+          fullName: "a suite inner suite a failing spec",
           passedExpectations: [],
           failedExpectations: [
             {
@@ -942,6 +950,9 @@ describe("HtmlReporter", function() {
         };
         reporter.specStarted(failingResult);
         reporter.specDone(failingResult);
+        reporter.suiteDone({});
+        reporter.suiteDone({});
+        reporter.suiteDone({});
         reporter.jasmineDone({});
       });
 
@@ -960,10 +971,6 @@ describe("HtmlReporter", function() {
         var specDiv = failure.childNodes[0];
         expect(specDiv.getAttribute("class")).toEqual("jasmine-description");
 
-        var specLink = specDiv.childNodes[0];
-        expect(specLink.getAttribute("title")).toEqual("a suite with a failing spec");
-        expect(specLink.getAttribute("href")).toEqual("?foo=bar&spec=a suite with a failing spec");
-
         var message = failure.childNodes[1].childNodes[0];
         expect(message.getAttribute("class")).toEqual("jasmine-result-message");
         expect(message.innerHTML).toEqual("a failure message");
@@ -971,6 +978,23 @@ describe("HtmlReporter", function() {
         var stackTrace = failure.childNodes[1].childNodes[1];
         expect(stackTrace.getAttribute("class")).toEqual("jasmine-stack-trace");
         expect(stackTrace.innerHTML).toEqual("a stack trace");
+      });
+
+      it('provides links to focus on a failure and each containing suite', function() {
+        var description = container.querySelector('.jasmine-failures .jasmine-description');
+        var links = description.querySelectorAll('a');
+
+        expect(description.textContent).toEqual('A suite > inner suite > a failing spec');
+
+        expect(links.length).toEqual(3);
+        expect(links[0].textContent).toEqual('A suite');
+        expect(links[0].href).toMatch(/\?foo=bar&spec=A%20suite/);
+
+        expect(links[1].textContent).toEqual('inner suite');
+        expect(links[1].href).toMatch(/\?foo=bar&spec=A%20suite%20inner%20suite/);
+
+        expect(links[2].textContent).toEqual('a failing spec');
+        expect(links[2].href).toMatch(/\?foo=bar&spec=a%20suite%20inner%20suite%20a%20failing%20spec/);
       });
 
       it("allows switching between failure details and the spec summary", function() {
